@@ -280,9 +280,6 @@ const addLogSubscriber = (
     filterPattern: FilterPattern.allEvents(),
     filterName: 'all',
   });
-  logGroupFuncSubscriber.addPermission('allow-log-subscriber', {
-    principal: new ServicePrincipal('logs.eu-west-1.amazonaws.com'),
-  });
 };
 
 /**
