@@ -150,7 +150,6 @@ describe('lambda-base', () => {
 
     // execute synth and test results
     const template = Template.fromStack(stack);
-    // console.log(JSON.stringify(template.toJSON(), null, 2));
 
     template.hasResourceProperties('AWS::Logs::SubscriptionFilter', {
       DestinationArn: {
@@ -162,6 +161,59 @@ describe('lambda-base', () => {
       FilterName: 'all',
       FilterPattern: '',
     });
+  });
+
+  it('should not duplicate lambda subscription permissions', async () => {
+    const app = new App();
+    const stack = new Stack(app);
+
+    const lambdaConfig: BaseNodeJsProps = {
+      stage: 'dev',
+      eventType: EventType.Http,
+      baseCodePath: 'src/apigateway/__tests__',
+      logGroupSubscriberLambdaArn: {
+        type: LogGroupSubscriberLambdaArnType.Arn,
+        value: 'arn:aws:lambda:eu-west-1:012345678:function:tstLogging',
+      },
+    };
+
+    const func = new BaseNodeJsFunction(stack, 'test-lambda', lambdaConfig);
+    expect(func).toBeDefined();
+
+    const func2 = new BaseNodeJsFunction(stack, 'todo-list', lambdaConfig);
+    expect(func2).toBeDefined();
+
+    // execute synth and test results
+    const template = Template.fromStack(stack);
+    console.log(JSON.stringify(template.toJSON(), null, 2));
+
+    template.hasResourceProperties('AWS::Logs::SubscriptionFilter', {
+      DestinationArn: 'arn:aws:lambda:eu-west-1:012345678:function:tstLogging',
+      LogGroupName: {
+        Ref: 'testlambdadefaultloggroup43FBE067',
+      },
+      FilterName: 'all',
+      FilterPattern: '',
+    });
+
+    template.hasResourceProperties('AWS::Logs::SubscriptionFilter', {
+      DestinationArn: 'arn:aws:lambda:eu-west-1:012345678:function:tstLogging',
+      LogGroupName: {
+        Ref: 'todolistdefaultloggroup4EB65C76',
+      },
+      FilterName: 'all',
+      FilterPattern: '',
+    });
+
+    template.resourcePropertiesCountIs(
+      'AWS::Lambda::Permission',
+      {
+        FunctionName: 'arn:aws:lambda:eu-west-1:012345678:function:tstLogging',
+        Action: 'lambda:InvokeFunction',
+        Principal: 'logs.eu-west-1.amazonaws.com',
+      },
+      1,
+    );
   });
 
   it('no vpc declaration', async () => {
