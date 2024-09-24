@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import https from 'https';
 
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import qs from 'qs';
 
 import { Wso2Config } from './types';
@@ -95,7 +95,7 @@ export const prepareAxiosForWso2Calls = async (wso2Config: Wso2Config): Promise<
         url: config.url,
         params: config.params,
         method: config.method,
-        headers: config.headers,
+        headers: hideSensitiveHeadersForLog(config.headers),
         status: config.status,
         data: config.data,
       }),
@@ -112,7 +112,7 @@ export const prepareAxiosForWso2Calls = async (wso2Config: Wso2Config): Promise<
       console.log(
         JSON.stringify({
           status: response.status,
-          headers: response.headers,
+          headers: hideSensitiveHeadersForLog(response.headers),
           data: response.data,
         }),
       );
@@ -125,7 +125,7 @@ export const prepareAxiosForWso2Calls = async (wso2Config: Wso2Config): Promise<
         console.log(
           JSON.stringify({
             status: error.response?.status,
-            headers: error.response?.headers,
+            headers: hideSensitiveHeadersForLog(error.response?.headers),
             data: error.response?.data,
           }),
         );
@@ -229,3 +229,11 @@ export const checkWso2ServerVersion = async (
   }
   throw new Error(`'wso2Api' version is not supported`);
 };
+
+const hideSensitiveHeadersForLog = (
+  headers: AxiosRequestConfig['headers'],
+): Record<string, string> => ({
+  ...headers,
+  ...(headers?.authorization && { authorization: '[OBFUSCATED]' }),
+  ...(headers?.Authorization && { Authorization: '[OBFUSCATED]' }),
+});
