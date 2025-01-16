@@ -16,7 +16,7 @@ import {
   MethodLoggingLevel,
 } from 'aws-cdk-lib/aws-apigateway';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { App, Duration, Stack } from 'aws-cdk-lib/core';
+import { App, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib/core';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Construct } from 'constructs';
 import { CfnFunction } from 'aws-cdk-lib/aws-lambda';
@@ -129,6 +129,11 @@ describe('openapi-gateway-lambda', () => {
         },
       ],
     });
+
+    template.hasResource('AWS::IAM::Role', {
+      UpdateReplacePolicy: 'Retain',
+      DeletionPolicy: 'Retain',
+    });
   });
 
   it('complex OpenApiGatewayLambda should work', async () => {
@@ -158,6 +163,7 @@ describe('openapi-gateway-lambda', () => {
       endpointTypes: [EndpointType.PRIVATE],
       vpcEndpointIds: ['vpce-123123'],
       openapiOperations,
+      cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
     });
 
     expect(apigw.specRestApi).toBeDefined();
@@ -216,6 +222,11 @@ describe('openapi-gateway-lambda', () => {
     template.hasResourceProperties('AWS::Logs::LogGroup', {
       LogGroupName: 'apigateway-accesslogs-myapi',
       RetentionInDays: 30,
+    });
+
+    template.hasResource('AWS::IAM::Role', {
+      UpdateReplacePolicy: 'Delete',
+      DeletionPolicy: 'Delete',
     });
   });
 

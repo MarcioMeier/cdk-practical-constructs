@@ -174,6 +174,7 @@ export const addLogGroupForTracing = (
     const logGroupAccessLog = new LogGroup(scope, 'AccessLogGroup', {
       logGroupName: `apigateway-accesslogs-${scope.node.id}`,
       retention: props.accessLogRetention,
+      removalPolicy: props.cloudWatchRoleRemovalPolicy,
     });
 
     const deployOptionsAccessLog: StageOptions = {

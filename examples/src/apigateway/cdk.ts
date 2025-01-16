@@ -36,6 +36,7 @@ export const addTodoApi = (scope: Construct, props: StageStackProps): void => {
       },
     },
     openapiOperations: operations,
+    cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
   });
 
   // remove API GW when CFN stack is removed
