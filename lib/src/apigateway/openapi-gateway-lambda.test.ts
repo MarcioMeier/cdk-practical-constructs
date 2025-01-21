@@ -75,7 +75,6 @@ describe('openapi-gateway-lambda', () => {
 
     // execute synth and test results
     const template = Template.fromStack(stack);
-    // console.log(JSON.stringify(template.toJSON(), null, 2));
 
     expect(apigw.node.id).toBe('myapi');
     expect(apigw.specRestApi.node.id).toBe('myapi-tst');
@@ -130,6 +129,11 @@ describe('openapi-gateway-lambda', () => {
       ],
     });
 
+    template.hasResource('AWS::ApiGateway::Account', {
+      UpdateReplacePolicy: 'Retain',
+      DeletionPolicy: 'Retain',
+    });
+
     template.hasResource('AWS::IAM::Role', {
       UpdateReplacePolicy: 'Retain',
       DeletionPolicy: 'Retain',
@@ -172,8 +176,6 @@ describe('openapi-gateway-lambda', () => {
     // execute synth and test results
     const template = Template.fromStack(stack);
     const templateStr = JSON.stringify(template.toJSON());
-
-    // console.log(JSON.stringify(template.toJSON(), null, 2));
 
     expect(templateStr.indexOf('myapi-endpoint')).not.toBe(-1);
 
@@ -219,9 +221,18 @@ describe('openapi-gateway-lambda', () => {
       },
     });
 
-    template.hasResourceProperties('AWS::Logs::LogGroup', {
-      LogGroupName: 'apigateway-accesslogs-myapi',
-      RetentionInDays: 30,
+    template.hasResource('AWS::ApiGateway::Account', {
+      UpdateReplacePolicy: 'Delete',
+      DeletionPolicy: 'Delete',
+    });
+
+    template.hasResource('AWS::Logs::LogGroup', {
+      Properties: {
+        LogGroupName: 'apigateway-accesslogs-myapi',
+        RetentionInDays: 30,
+      },
+      UpdateReplacePolicy: 'Delete',
+      DeletionPolicy: 'Delete',
     });
 
     template.hasResource('AWS::IAM::Role', {
