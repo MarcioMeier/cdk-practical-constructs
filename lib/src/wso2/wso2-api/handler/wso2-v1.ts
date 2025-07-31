@@ -285,12 +285,22 @@ export const updateOpenapiInWso2AndCheck = async (
   },
 ): Promise<void> => {
   console.log('Updating Openapi document in WSO2');
-  const fdata = new FormData();
-  const openapiDocumentStr = JSON.stringify(args.openapiDocument);
-  fdata.append('apiDefinition', openapiDocumentStr);
-  await args.wso2Axios.put(`/api/am/publisher/v1/apis/${args.wso2ApiId}/swagger`, fdata, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  
+  // Try sending as JSON first to preserve boolean types in examples
+  try {
+    await args.wso2Axios.put(`/api/am/publisher/v1/apis/${args.wso2ApiId}/swagger`, args.openapiDocument, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.log('JSON upload failed, falling back to multipart/form-data format');
+    // Fallback to original multipart/form-data approach
+    const fdata = new FormData();
+    const openapiDocumentStr = JSON.stringify(args.openapiDocument);
+    fdata.append('apiDefinition', openapiDocumentStr);
+    await args.wso2Axios.put(`/api/am/publisher/v1/apis/${args.wso2ApiId}/swagger`, fdata, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
 
   await backOff(async () => {
     console.log('');
